@@ -254,7 +254,7 @@ fi
 # создание ссылок/файлов для weekly|monthly
 create_links $SD_DAILY
 
-if[ ! -z "$SM" ];then
+if [ ! -z "$SM" ]; then
   umount `dirname $SD`
 fi
 
