@@ -91,9 +91,9 @@ check_dir()
 
 check_reqs()
 {
-    if[ ! -z "$SM" ];then
+    if [ ! -z "$SM" ]; then
       mount | grep `dirname $SD` > /dev/null
-      if [ "$?" != "0" ];then
+      if [ "$?" != "0" ]; then
           mount `dirname $SD`
       fi
     fi
