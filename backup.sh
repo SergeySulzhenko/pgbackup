@@ -17,7 +17,7 @@
 # Необязательные параметры конфигурации
 # DUMP_PREFIX="" - каталог где размещены pg_dump & pg_dumpall (на случай если в системе установлено больше одной версии postgresql)
 # DUMP_JOBS=8 - параллельные потоки, установить по числу ядер, либо меньше
-# DUMP_OPTIONS="--compress=9" - прочие опции для pg_dump
+# DUMP_OPTS="--compress=9" - прочие опции для pg_dump
 # CONN_USER="root" - user/password для подключения (если запускается не из под postgres. не тестировалось!!)
 # CONN_PASS="root"
 # TTL_DAYS_DAILY=8  - время хранения архивов для daily|weekly|monthly
@@ -71,7 +71,7 @@ DB_USER="${CONN_USER:+--no-password --username=}${CONN_USER}"
 DB_JOBS="${DUMP_JOBS:+--jobs=}${DUMP_JOBS}"
 
 # опции и команды pg_dump(all)
-OPTIONS="-Fd $DB_HOST $DB_PORT $DB_USER $DB_JOBS $DUMP_OPTS"
+OPTIONS="$DB_HOST $DB_PORT $DB_USER $DB_JOBS $DUMP_OPTS"
 DUMP="${DUMP_PREFIX}pg_dump $OPTIONS"
 DUMP_ALL="${DUMP_PREFIX}pg_dumpall $DB_HOST $DB_PORT $DB_USER"
 
@@ -183,9 +183,11 @@ dump_data()
             stdlog "..found old directory, removing ${DD}/${DB}..."
             rm -rf "${DD}/${DB}"
         fi
-        $DUMP -f "${DD}/${DB}" $DB \
+
+        cd "${DST}" &&
+        $DUMP -f "./${DATE}_${DB}_schema.sql" --schema-only $DB &&
+        $DUMP -Fd -f "${DD}/${DB}" $DB \
             && stdlog "Dump ready. Start packing to tar" \
-            && cd "${DST}" \
             && tar cf "./${DATE}_${DB}.tar" "${DD}/${DB}" \
             && stdlog "Tar ready. Removing dump directory" \
             && rm -rf "${DD}/${DB}"
@@ -207,7 +209,7 @@ dump_all()
     # TRG=/var/backup/psqlbackup/daily
     TRG=$1
 
-    dump_config "${TRG}" \
+    dump_config ${CONFIG_DIR:-/etc/postgresql} "${TRG}" \
         && dump_roles "${TRG}/${DATE}_roles.sql" \
         && dump_schema "${TRG}/${DATE}_schema.sql" \
         && dump_data "${TRG}"
@@ -217,9 +219,13 @@ dump_all()
 
 dump_config()
 {
+    # SRC=/etc/postgresql
     # TRG=/var/backup/psqlbackup/daily
-    TRG=$1
-    tar czpf "${TRG}/${DATE}_config.tgz" /etc/postgresql
+    SRC=$1
+    TRG=$2
+    if [ -n "$SRC" -a -d "$SRC" ]; then
+      tar czpf "${TRG}/${DATE}_config.tgz" /etc/postgresql
+    fi
 
     return $?
 }
