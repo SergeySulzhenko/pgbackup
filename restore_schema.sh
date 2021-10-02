@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -xe
 exec 2>&1
 CONFIG=$1
 
