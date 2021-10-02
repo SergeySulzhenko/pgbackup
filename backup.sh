@@ -71,9 +71,8 @@ DB_USER="${CONN_USER:+--no-password --username=}${CONN_USER}"
 DB_JOBS="${DUMP_JOBS:+--jobs=}${DUMP_JOBS}"
 
 # опции и команды pg_dump(all)
-OPTIONS="$DB_HOST $DB_PORT $DB_USER $DB_JOBS $DUMP_OPTS"
-DUMP="${DUMP_PREFIX}pg_dump $OPTIONS"
-DUMP_ALL="${DUMP_PREFIX}pg_dumpall $DB_HOST $DB_PORT $DB_USER"
+DUMP="${DUMP_PREFIX}pg_dump $DB_HOST $DB_PORT $DB_USER $DUMP_OPTS"
+DUMP_ALL="${DUMP_PREFIX}pg_dumpall $DB_HOST $DB_PORT $DB_USER $DUMP_OPTS"
 
 
 stdlog()
@@ -186,7 +185,7 @@ dump_data()
 
         cd "${DST}" &&
         $DUMP -f "./${DATE}_${DB}_schema.sql" --schema-only $DB &&
-        $DUMP -Fd -f "${DD}/${DB}" $DB \
+        $DUMP $DB_JOBS -Fd -f "${DD}/${DB}" $DB \
             && stdlog "Dump ready. Start packing to tar" \
             && tar cf "./${DATE}_${DB}.tar" "${DD}/${DB}" \
             && stdlog "Tar ready. Removing dump directory" \
